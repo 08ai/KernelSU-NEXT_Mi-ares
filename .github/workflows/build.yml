@@ -5,22 +5,24 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
-    - name: Install tools
+    - name: Install deps
+      run: sudo apt-get update -qq && sudo apt-get install -y -qq gcc flex bison bc libssl-dev
+    - name: Setup Proton Clang
       run: |
-        sudo apt-get update -qq
-        sudo apt-get install -y -qq clang-14 lld-14 gcc gcc-aarch64-linux-gnu flex bison bc libssl-dev
-        sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-14 100
-        sudo update-alternatives --install /usr/bin/ld.lld ld.lld /usr/bin/ld.lld-14 100
+        git clone --depth=1 https://github.com/kdrag0n/proton-clang.git proton-clang
+        echo "PATH=$(pwd)/proton-clang/bin:$PATH" >> $GITHUB_ENV
     - name: Fetch KernelSU
       run: curl -LSs https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh | bash -s v0.9.5
     - name: Configure
       run: |
         export ARCH=arm64
-        make ares_user_defconfig
-        scripts/config --enable KALLSYMS_ALL --set-str LOCALVERSION "-ksu"
-        make olddefconfig
+        make ares_user_defconfig CC=clang
+        scripts/config --enable KALLSYMS_ALL
+        scripts/config --set-str LOCALVERSION "-ksu"
+        make olddefconfig CC=clang
     - name: Build
       run: |
-        make ARCH=arm64 -j$(nproc) CC=clang LD=ld.lld CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=aarch64-linux-gnu- LLVM_IAS=0 HOSTCC=gcc
+        export ARCH=arm64
+        make -j$(nproc) CC=clang LD=ld.lld CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi-
     - uses: actions/upload-artifact@v4
       with: {name: Image, path: arch/arm64/boot/Image}
