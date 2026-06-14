@@ -17,13 +17,11 @@ jobs:
       run: |
         export ARCH=arm64
         make ares_user_defconfig CC=clang
-        scripts/config --enable KALLSYMS_ALL
-        scripts/config --set-str LOCALVERSION "-ksu"
-        scripts/config --disable CC_WERROR
+        scripts/config --enable KALLSYMS_ALL --set-str LOCALVERSION "-ksu" --disable CC_WERROR
         make olddefconfig CC=clang
     - name: Build
       run: |
         export ARCH=arm64
-        make -j8 CC=clang LD=ld.lld CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=aarch64-linux-gnu-
+        make -j8 CC=clang CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=aarch64-linux-gnu-
     - uses: actions/upload-artifact@v4
       with: {name: Image, path: arch/arm64/boot/Image}
