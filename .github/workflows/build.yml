@@ -24,6 +24,6 @@ jobs:
     - name: Build
       run: |
         export ARCH=arm64
-        make -j\$(nproc) CC=clang LD=ld.lld CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=aarch64-linux-gnu-
+        make -j8 CC=clang LD=ld.lld CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=aarch64-linux-gnu-
     - uses: actions/upload-artifact@v4
       with: {name: Image, path: arch/arm64/boot/Image}
