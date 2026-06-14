@@ -5,28 +5,21 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
-    - name: Install deps
-      run: sudo apt-get update -qq && sudo apt-get install -y -qq gcc flex bison bc libssl-dev
-    - name: Setup NDK
+    - name: Install clang-14
       run: |
-        wget -q https://dl.google.com/android/repository/android-ndk-r27c-linux.zip
-        unzip -q android-ndk-r27c-linux.zip
-        echo "NDK=$(pwd)/android-ndk-r27c" >> $GITHUB_ENV
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq clang-14 lld-14 gcc flex bison bc libssl-dev
+        sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-14 100
+        sudo update-alternatives --install /usr/bin/ld.lld ld.lld /usr/bin/ld.lld-14 100
     - name: Fetch KernelSU
       run: curl -LSs https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh | bash -s v0.9.5
     - name: Configure
       run: |
-        export PATH=${{ env.NDK }}/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
         export ARCH=arm64
         make ares_user_defconfig
-        scripts/config --enable KALLSYMS_ALL
-        scripts/config --set-str LOCALVERSION "-ksu"
+        scripts/config --enable KALLSYMS_ALL --set-str LOCALVERSION "-ksu"
         make olddefconfig
     - name: Build
-      run: |
-        export PATH=${{ env.NDK }}/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
-        make ARCH=arm64 -j$(nproc) CC=clang LD=ld.lld CLANG_TRIPLE=aarch64-linux-gnu- HOSTCC=gcc HOSTCFLAGS="-Wno-deprecated-declarations"
+      run: make ARCH=arm64 -j$(nproc) CC=clang LD=ld.lld CLANG_TRIPLE=aarch64-linux-gnu- HOSTCC=gcc
     - uses: actions/upload-artifact@v4
-      with:
-        name: Image
-        path: arch/arm64/boot/Image
+      with: {name: Image, path: arch/arm64/boot/Image}
