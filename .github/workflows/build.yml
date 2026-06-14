@@ -1,0 +1,20 @@
+name: Build
+on: [workflow_dispatch, push]
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+    - run: sudo apt-get update -qq && sudo apt-get install -y -qq clang llvm lld make gcc flex bison bc
+    - run: curl -LSs https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh | bash -s v0.9.5
+    - run: |
+        export ARCH=arm64
+        make ares_user_defconfig
+        scripts/config --enable KALLSYMS_ALL
+        scripts/config --set-str LOCALVERSION "-ksu"
+        make olddefconfig
+    - run: make ARCH=arm64 -j$(nproc) CC=clang LD=ld.lld CLANG_TRIPLE=aarch64-linux-gnu-
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Image
+        path: arch/arm64/boot/Image
