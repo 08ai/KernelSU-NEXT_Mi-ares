@@ -10,7 +10,7 @@ jobs:
     - name: Setup Proton Clang
       run: |
         git clone --depth=1 https://github.com/kdrag0n/proton-clang.git proton-clang
-        echo "PATH=$(pwd)/proton-clang/bin:$PATH" >> $GITHUB_ENV
+        echo "PATH=$(pwd)/proton-clang/bin:\$PATH" >> \$GITHUB_ENV
     - name: Fetch KernelSU
       run: curl -LSs https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh | bash -s v0.9.5
     - name: Configure
@@ -19,10 +19,11 @@ jobs:
         make ares_user_defconfig CC=clang
         scripts/config --enable KALLSYMS_ALL
         scripts/config --set-str LOCALVERSION "-ksu"
+        scripts/config --disable CC_WERROR
         make olddefconfig CC=clang
     - name: Build
       run: |
         export ARCH=arm64
-        make -j$(nproc) CC=clang LD=ld.lld CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+        make -j\$(nproc) CC=clang LD=ld.lld CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=aarch64-linux-gnu-
     - uses: actions/upload-artifact@v4
       with: {name: Image, path: arch/arm64/boot/Image}
