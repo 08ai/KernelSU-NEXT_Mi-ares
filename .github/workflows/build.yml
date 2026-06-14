@@ -5,6 +5,8 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
+    - name: Install deps
+      run: sudo apt-get update -qq && sudo apt-get install -y -qq gcc flex bison bc libssl-dev
     - name: Setup NDK
       run: |
         wget -q https://dl.google.com/android/repository/android-ndk-r27c-linux.zip
@@ -23,7 +25,7 @@ jobs:
     - name: Build
       run: |
         export PATH=${{ env.NDK }}/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
-        make ARCH=arm64 -j$(nproc) CC=aarch64-linux-android21-clang LD=aarch64-linux-android21-ld CLANG_TRIPLE=aarch64-linux-gnu-
+        make ARCH=arm64 -j$(nproc) CC=clang LD=ld.lld CLANG_TRIPLE=aarch64-linux-gnu- HOSTCC=gcc HOSTCFLAGS="-Wno-deprecated-declarations"
     - uses: actions/upload-artifact@v4
       with:
         name: Image
